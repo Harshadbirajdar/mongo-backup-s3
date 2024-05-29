@@ -1,0 +1,17 @@
+{
+  "name": "mongo-backup-s3",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Harshad Birajdar",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.1629.0",
+    "dotenv": "^16.4.5",
+    "node-cron": "^3.0.3"
+  }
+}
