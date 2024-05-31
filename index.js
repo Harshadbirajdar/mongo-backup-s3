@@ -18,9 +18,10 @@ const mongoUri = process.env.MONGODB_URL;
 
 const backupDir = "backup";
 const dbName = getDbName(mongoUri);
-const zipFileName = `${dbName}_${formatDate(new Date())}.zip`;
 
 const backupMongoDB = () => {
+  const zipFileName = `${dbName}_${formatDate(new Date())}.zip`;
+
   return new Promise((resolve, reject) => {
     const dumpCommand = `mongodump --uri="${mongoUri}" --out="${backupDir}"`;
 
