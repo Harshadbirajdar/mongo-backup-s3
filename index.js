@@ -89,4 +89,6 @@ const job = cron.schedule("0 0 * * *", () => {
   main();
 });
 
+main();
+
 job.start();
