@@ -1,5 +1,5 @@
 const { exec } = require("child_process");
-const AWS = require("aws-sdk");
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const fs = require("fs");
 const path = require("path");
 const { getDbName, formatDate } = require("./utils");
@@ -7,10 +7,12 @@ const cron = require("node-cron");
 require("dotenv").config();
 
 // Configure AWS S3
-const s3 = new AWS.S3({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+const s3Client = new S3Client({
   region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
 });
 
 const S3_BUCKET = process.env.S3_BUCKET;
@@ -20,7 +22,7 @@ const backupDir = "backup";
 const dbName = getDbName(mongoUri);
 
 const backupMongoDB = () => {
-  const zipFileName = `${dbName}_${formatDate(new Date())}.zip`;
+  const zipFileName = `${formatDate(new Date())}.zip`;
 
   return new Promise((resolve, reject) => {
     const dumpCommand = `mongodump --uri="${mongoUri}" --out="${backupDir}"`;
@@ -55,19 +57,22 @@ const uploadToS3 = (filePath) => {
     const fileStream = fs.createReadStream(filePath);
     const params = {
       Bucket: S3_BUCKET,
-      Key: `db/${path.basename(filePath)}`,
+      Key: `db/${dbName}/${path.basename(filePath)}`,
       Body: fileStream,
     };
 
-    s3.upload(params, (err, data) => {
-      if (err) {
+    const command = new PutObjectCommand(params);
+
+    s3Client.send(command)
+      .then((data) => {
+        const s3Location = `https://${S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/db/${dbName}/${path.basename(filePath)}`;
+        console.log(`Upload success: ${s3Location}`);
+        resolve(s3Location);
+      })
+      .catch((err) => {
         console.error(`Upload error: ${err}`);
         reject(err);
-      } else {
-        console.log(`Upload success: ${data.Location}`);
-        resolve(data.Location);
-      }
-    });
+      });
   });
 };
 
